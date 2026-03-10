@@ -1,23 +1,78 @@
 import { create } from "zustand";
 
-import toast, { Toast } from "react-hot-toast";
-import { email } from "zod";
+import toast from "react-hot-toast";
+import type { AuthState } from "@/types/store";
+import { authService } from "@/services/authServices";
 
-export const useAuthStore = create((set, get) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
   user: null,
   loading: false,
+  clearState: () => set({ accessToken: null, user: null }),
 
   signUp: async (username, password, email, firstname, lastname) => {
     try {
       set({ loading: true });
-
       // goi api
+      const res = await authService.signUp(
+        username,
+        password,
+        email,
+        firstname,
+        lastname,
+      );
+      toast.success(res.message);
+      return res;
+    } catch (error: any) {
+      console.log(error);
+      const message = error.response.data.message;
+      toast.error(message);
+      return { success: false };
+    } finally {
+      set({ loading: false });
+    }
+  },
 
-      toast.success("Đăng ký thành công");
+  signIn: async (username, password) => {
+    try {
+      set({ loading: true });
+      // goi api
+      const { accessToken } = await authService.signIn(username, password);
+      set({ accessToken });
+
+      await get().fetchMe();
+      toast.success("Đăng nhập thành công ");
     } catch (error) {
       console.log(error);
-      toast.error("Đăng ký thất bại");
+      toast.error(`Đăng nhập thất bại`);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  signOut: async () => {
+    try {
+      get().clearState();
+      // goi api
+      await authService.signOut();
+      toast.success("Đăng xuat thanh cong");
+    } catch (error) {
+      console.log(error);
+      toast.error(`Đăng xuat that bai`);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  fetchMe: async () => {
+    try {
+      set({ loading: true });
+      const user = await authService.fetchMe();
+      set({ user });
+    } catch (error) {
+      console.log(error);
+      toast.error("Lỗi lấy dữ liệu người dùng");
+      set({ user: null, accessToken: null });
     } finally {
       set({ loading: false });
     }

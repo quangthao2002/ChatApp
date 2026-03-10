@@ -30,7 +30,9 @@ export const signUp = async (req, res) => {
       displayName: `${firstname} ${lastname}`,
     });
     await newUser.save();
-    res.status(201).json({ message: "User created successfully" });
+    res
+      .status(201)
+      .json({ success: true, message: "User created successfully" });
   } catch (error) {
     console.error("Lỗi khi tạo người dùng:", error);
     res.status(500).json({ message: error.message });
@@ -92,12 +94,40 @@ export const signOut = async (req, res) => {
     if (!refreshToken) {
       return res.status(400).json({ message: "Refresh token is required" });
     }
-    // delete refresh token from database
     await Session.deleteOne({ refreshToken });
     // clear refresh token cookie
     res.clearCookie("refreshToken");
     res.status(200).json({ message: "User signed out successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const refreshToken = async (req, res) => {
+  try {
+    // lấy token tu cooki
+    const token = req.cookies?.refreshToken;
+
+    if (!token) {
+      return res.status(401).json({ message: "Token không tồn tại" });
+    }
+    // so với token refresh token trong db
+    const session = await Session.findOne({ refreshToken: token });
+
+    if (!session) {
+      return res.status(401).json({ message: "refresh token không hợp lệ" });
+    }
+
+    // tạo accesstoken mới
+
+    const accessToken = jwt.sign({
+      userId: session.userId,
+    });
+    (process.env.ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
+
+    return res.status(200).json({ accessToken });
+  } catch (error) {
+    console.log("Lỗi khi gọi refreshToken");
+    return res.status(500).json({ message: "lỗi hệ thống" });
   }
 };

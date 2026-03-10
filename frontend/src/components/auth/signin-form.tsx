@@ -8,9 +8,11 @@ import { useForm } from "react-hook-form";
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useNavigate } from "react-router";
 
 const signInSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
+  username: z.string().min(1, "Tên người dùng không được để trống"),
   password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
 });
 
@@ -20,6 +22,8 @@ export function SigninForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { signIn } = useAuthStore();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -28,8 +32,11 @@ export function SigninForm({
     resolver: zodResolver(signInSchema),
   });
 
-  const onsubmit = (data: SignInFormData) => {
-    console.log(data);
+  const onsubmit = async (data: SignInFormData) => {
+    const { username, password } = data;
+    await signIn(username, password);
+
+    navigate("/");
   };
 
   return (
@@ -48,24 +55,24 @@ export function SigninForm({
                   Chào mừng bạn trở lại!
                 </p>
               </div>
-              {/* email */}
+              {/* username */}
               <div className="flex flex-col gap-2">
                 <Label
-                  htmlFor="email"
+                  htmlFor="username"
                   className="text-sm font-medium leading-6"
                 >
-                  Email
+                  Tên đăng nhập
                 </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
+                  id="username"
+                  type="text"
+                  autoComplete="username"
                   className="w-full rounded-md border border-input "
-                  {...register("email")}
+                  {...register("username")}
                 />
-                {errors.email && (
+                {errors.username && (
                   <p className="text-sm text-destructive ">
-                    {errors.email.message}
+                    {errors.username.message}
                   </p>
                 )}
               </div>

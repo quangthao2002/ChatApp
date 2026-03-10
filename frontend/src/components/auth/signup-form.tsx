@@ -9,6 +9,8 @@ import { useForm } from "react-hook-form";
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 const signUpSchema = z.object({
   firstname: z.string().min(1, "Họ không được để trống"),
@@ -24,6 +26,8 @@ export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { signUp } = useAuthStore();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -33,8 +37,10 @@ export function SignupForm({
     resolver: zodResolver(signUpSchema), // để kết nối useForm với zod schema để validate dữ liệu khi submit form
   });
 
-  const onsubmit = (data: SignUpFormData) => {
-    console.log(data);
+  const onsubmit = async (data: SignUpFormData) => {
+    const { username, password, email, firstname, lastname } = data;
+    await signUp(username, password, email, firstname, lastname);
+    navigate("/signin");
   };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

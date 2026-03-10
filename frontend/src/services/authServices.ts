@@ -1,28 +1,41 @@
 import api from "@/lib/axios";
 
-// sign in function
-export const signIn = async (email: string, password: string) => {
-  try {
-    const response = await api.post("/auth/signin", { email, password });
-    return response.data;
-  } catch (error) {
-    console.error("Error signing in:", error);
-    throw error;
-  }
-};
-// sign up function
-export const signUp = async (
-  username,
-  password,
-  email,
-  firstname,
-  lastname,
-) => {
-  try {
-    const response = await api.post("/auth/signup", { email, password });
-    return response.data;
-  } catch (error) {
-    console.error("Error signing up:", error);
-    throw error;
-  }
+export const authService = {
+  signUp: async (
+    username: string,
+    password: string,
+    email: string,
+    firstname: string,
+    lastname: string,
+  ) => {
+    const res = await api.post(
+      "/auth/signup",
+      {
+        username,
+        password,
+        email,
+        firstname,
+        lastname,
+      },
+      { withCredentials: true }, // bật gửi cookie trong các yêu cầu
+    );
+    return res.data;
+  },
+
+  signIn: async (username: string, password: string) => {
+    const res = await api.post(
+      "/auth/signin",
+      { username, password },
+      { withCredentials: true },
+    );
+    return res.data;
+  },
+  signOut: async () => {
+    const res = await api.post("/auth/signout", {}, { withCredentials: true });
+    return res.data;
+  },
+  fetchMe: async () => {
+    const res = await api.get("/user/me", { withCredentials: true });
+    return res.data.user;
+  },
 };
