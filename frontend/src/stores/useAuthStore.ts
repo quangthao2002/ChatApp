@@ -3,11 +3,15 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import type { AuthState } from "@/types/store";
 import { authService } from "@/services/authServices";
+import { gte } from "zod";
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
   user: null,
   loading: false,
+  setAccessToken: (accessToken) => {
+    set({ accessToken });
+  },
   clearState: () => set({ accessToken: null, user: null }),
 
   signUp: async (username, password, email, firstname, lastname) => {
@@ -38,7 +42,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ loading: true });
       // goi api
       const { accessToken } = await authService.signIn(username, password);
-      set({ accessToken });
+      get().setAccessToken(accessToken);
 
       await get().fetchMe();
       toast.success("Đăng nhập thành công ");
@@ -75,6 +79,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user: null, accessToken: null });
     } finally {
       set({ loading: false });
+    }
+  },
+  refreshToken: async () => {
+    try {
+      const { user, fetchMe } = get();
+      set({ loading: true });
+      const accessToken = await authService.refreshToken();
+
+      get().setAccessToken(accessToken);
+      if (!user) {
+        await fetchMe();
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Phiên đăng nhập hết hạn vui lòng đăng nhập lại");
+      get().clearState();
     }
   },
 }));
