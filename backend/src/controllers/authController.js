@@ -4,9 +4,9 @@ import jwt from "jsonwebtoken";
 import Session from "../models/Session.js";
 import crypto from "crypto";
 
-const ACCESS_TOKEN_TTL = "30m";
-const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-
+const ACCESS_TOKEN_TTL = "15minutes";
+const REFRESH_TOKEN_TTL = 30 * 1000; // 30 g
+// const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 // sign up
 export const signUp = async (req, res) => {
   try {
@@ -114,16 +114,25 @@ export const refreshToken = async (req, res) => {
     // so với token refresh token trong db
     const session = await Session.findOne({ refreshToken: token });
 
+    // không tìm thấy session trong DB
     if (!session) {
-      return res.status(401).json({ message: "refresh token không hợp lệ" });
+      return res
+        .status(401)
+        .json({ message: "refresh token không hợp lệ hoặc đã hết hạn" });
+    }
+
+    // kiểm tra hạn sử dụng refresh token
+    if (session.expiresAt && session.expiresAt.getTime() < Date.now()) {
+      return res.status(401).json({ message: "refresh token đã hết hạn" });
     }
 
     // tạo accesstoken mới
 
-    const accessToken = jwt.sign({
-      userId: session.userId,
-    });
-    (process.env.ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
+    const accessToken = jwt.sign(
+      { userId: session.userId },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: ACCESS_TOKEN_TTL },
+    );
 
     return res.status(200).json({ accessToken });
   } catch (error) {

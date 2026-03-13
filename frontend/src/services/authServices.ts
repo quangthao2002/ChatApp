@@ -31,7 +31,7 @@ export const authService = {
     return res.data;
   },
   signOut: async () => {
-    const res = await api.post("/auth/signout", {}, { withCredentials: true });
+    const res = await api.post("/auth/signout", { withCredentials: true });
     return res.data;
   },
   fetchMe: async () => {
@@ -41,5 +41,11 @@ export const authService = {
   refreshToken: async () => {
     const res = await api.post("auth/refreshtoken", { withCredentials: true });
     return res.data.accessToken;
+  },
+  testAuthToken: async () => {
+    const res = await api.get("/user/test-auth-token", {
+      withCredentials: true,
+    });
+    return res.data;
   },
 };

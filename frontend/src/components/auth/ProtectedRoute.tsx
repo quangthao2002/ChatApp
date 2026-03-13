@@ -3,15 +3,12 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router";
 
 const ProtectedRoute = () => {
-  const { accessToken, user, loading, fetchMe, refreshToken } = useAuthStore();
+  const { accessToken, loading, refreshToken } = useAuthStore();
   const [starting, setStarting] = useState(true);
+  console.log("accessToken", accessToken);
   const init = async () => {
     if (!accessToken) {
       await refreshToken();
-    }
-
-    if (accessToken && !user) {
-      await fetchMe();
     }
     setStarting(false);
   };

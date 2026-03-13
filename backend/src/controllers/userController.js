@@ -9,3 +9,15 @@ export const getUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const testAuthToken = async (req, res) => {
+  try {
+    const user = req.user;
+    res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    console.error("Error testing auth token:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

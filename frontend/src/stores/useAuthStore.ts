@@ -3,7 +3,6 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import type { AuthState } from "@/types/store";
 import { authService } from "@/services/authServices";
-import { gte } from "zod";
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
@@ -86,7 +85,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { user, fetchMe } = get();
       set({ loading: true });
       const accessToken = await authService.refreshToken();
-
       get().setAccessToken(accessToken);
       if (!user) {
         await fetchMe();
@@ -95,6 +93,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.log(error);
       toast.error("Phiên đăng nhập hết hạn vui lòng đăng nhập lại");
       get().clearState();
+    } finally {
+      set({ loading: false });
+    }
+  },
+  testAuthToken: async () => {
+    try {
+      const res = await authService.testAuthToken();
+      toast.success("Kiểm tra token thành công");
+      return res;
+    } catch (error) {
+      console.log(error);
+      toast.error("Lỗi kiểm tra token");
     }
   },
 }));

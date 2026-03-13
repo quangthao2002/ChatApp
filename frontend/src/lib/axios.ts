@@ -24,15 +24,20 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config;
-    if (originalRequest) {
-      originalRequest.url.icludes("auth/signin") ||
-        originalRequest.url.icludes("auth/signup") ||
-        originalRequest.url.icludes("auth/refreshtoken");
-    }
-    {
-      return Promise.reject(error);
-    }
+    if (!originalRequest) return Promise.reject(error);
+
+    const url =
+      typeof originalRequest.url === "string" ? originalRequest.url : "";
+    const isAuthEndpoint =
+      url.includes("/auth/signin") ||
+      url.includes("/auth/signup") ||
+      url.includes("/auth/refreshtoken");
+
+    // không refresh cho chính các endpoint auth
+    if (isAuthEndpoint) return Promise.reject(error);
+
     originalRequest._retryCount = originalRequest._retryCount || 0;
+    // access token hết hạn lần đầu tiên và tối đa 4 lần refresh
     if (error.response?.status === 401 && originalRequest._retryCount <= 4) {
       originalRequest._retryCount += 1;
       try {
@@ -41,11 +46,12 @@ api.interceptors.response.use(
         });
         const newAccesstoken = res.data.accessToken;
         useAuthStore.getState().setAccessToken(newAccesstoken);
-
+        // gán access token mới vào req header
         originalRequest.headers.Authorization = `Bearer ${newAccesstoken}`;
 
         return api(originalRequest);
       } catch (error) {
+        // refreshToken hết hạn / không hợp lệ => đăng xuất về trang đăng nhập
         useAuthStore.getState().clearState();
         return Promise.reject(error);
       }
